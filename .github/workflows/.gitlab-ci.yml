@@ -1,0 +1,57 @@
+# ==========================================================
+# VortexHub Universal Autoload Pipeline — v3.2 Stable
+# Dr. Sadat / VortexHub Labs
+# ==========================================================
+
+image: alpine:latest
+
+stages:
+  - validate
+  - autoload
+  - deploy
+
+variables:
+  PROJECT_NAME: "vortex-universal-orchestrator"
+  AUTOLOAD_DIR: "_scripts_autoload"
+  PUBLIC_DIR: "public"
+
+# ----------------------------
+# 1️⃣ Validate Config Files
+# ----------------------------
+validate:
+  stage: validate
+  script:
+    - echo "🔍 Validating project configuration..."
+    - test -f .gitlab-ci.yml || (echo "❌ CI file missing" && exit 1)
+    - test -d "$AUTOLOAD_DIR" || (echo "⚠️ No autoload dir found, skipping.")
+  tags: [docker]
+  only:
+    - main
+
+# ----------------------------
+# 2️⃣ Autoload Drop-Zone
+# ----------------------------
+autoload:
+  stage: autoload
+  script:
+    - echo "📦 Auto-collecting files from $AUTOLOAD_DIR..."
+    - mkdir -p "$PUBLIC_DIR"
+    - cp -r "$AUTOLOAD_DIR"/* "$PUBLIC_DIR"/ || echo "⚠️ Nothing to autoload."
+    - echo "<h3>✅ VortexHub Auto-Deploy Updated $(date -u)</h3>" > "$PUBLIC_DIR/index.html"
+    - ls -la "$PUBLIC_DIR"
+  tags: [docker]
+  only:
+    - main
+
+# ----------------------------
+# 3️⃣ Deploy to GitLab Pages
+# ----------------------------
+deploy:
+  stage: deploy
+  script:
+    - echo "🚀 Deploying project to GitLab Pages..."
+  artifacts:
+    paths:
+      - public
+  only:
+    - mainM
